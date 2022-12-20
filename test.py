@@ -1,8 +1,4 @@
-import time
-from main import env
-
-
-def test_model(model, episodes=10):
+def test_model(env, model, episodes=10):
     for episode in range(1, episodes + 1):
         observation = env.reset()
         done = False
@@ -18,6 +14,5 @@ def test_model(model, episodes=10):
                 break
 
         print(f"Episode {episode}, Total Reward: {total_reward}")
-        time.sleep(2)
 
     env.close()

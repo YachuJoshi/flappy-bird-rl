@@ -15,49 +15,45 @@ caption: str = "Flappy Bird"
 class FlappyBirdEnv(gym.Env):
     metadata = {
         "render_modes": ["human"],
-        "render_fps": 60,
+        "render_fps": 120,
     }
 
     def __init__(self, render_mode=None):
         super(FlappyBirdEnv, self).__init__()
 
-        shape = (5,)
+        shape = (3,)
         obs_low = np.ones(shape) * -np.inf
         obs_high = np.ones(shape) * np.inf
 
-        # [birdY, topPipeX, topPipeY, bottomPipeX, bottomPipeY]
+        # [ birdY, horizontalDistance, verticalDistance ]
         self.observation_space = Box(
             low=obs_low, high=obs_high, shape=(shape), dtype=np.float64
         )
 
         self.action_space = Discrete(2)
+
         self.score = 0
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         self.screen, self.clock = init(caption)
+
         self.foreground = None
         self.foreground_rect = None
-        self.cooldown = 2000
+        self.top_pipes = []
+        self.bottom_pipes = []
+        self.event = pygame.USEREVENT + 1
+        pygame.time.set_timer(self.event, 2000)
 
     def _get_obs(self):
-        if len(self.top_pipes) == 0 or len(self.top_pipes) == 0:
-            return np.array(
-                [self.bird.y, SCREEN_WIDTH + 10, -600, SCREEN_WIDTH + 10, -600]
-            )
+        if len(self.bottom_pipes) == 0:
+            return np.array([self.bird.y, SCREEN_WIDTH + 10, SCREEN_HEIGHT + 10])
 
-        top_pipe = self.top_pipes[0]
         bottom_pipe = self.bottom_pipes[0]
+        horizontal_distance = bottom_pipe.rect.right - self.bird.rect.right
+        vertical_distance = bottom_pipe.rect.top - self.bird.rect.bottom
 
-        return np.array(
-            [
-                self.bird.y,
-                top_pipe.rect.left,
-                top_pipe.rect.bottom,
-                bottom_pipe.rect.left,
-                bottom_pipe.rect.top,
-            ]
-        )
+        return np.array([self.bird.y, horizontal_distance, vertical_distance])
 
     def _get_info(self):
         return {}
@@ -73,13 +69,14 @@ class FlappyBirdEnv(gym.Env):
         )
 
     def reset(self):
-        self.last = 0
+        pygame.time.set_timer(self.event, 0)
+        pygame.time.set_timer(self.event, 2000)
         self.bird = Bird()
         self.reward = 0
         self.score = 0
         self.done = False
-        self.top_pipes = []
-        self.bottom_pipes = []
+        self.top_pipes = [Pipe({"x": 200, "y": -250, "type": "top"})]
+        self.bottom_pipes = [Pipe({"x": 200, "y": 180, "type": "bottom"})]
 
         observation = self._get_obs()
 
@@ -92,6 +89,10 @@ class FlappyBirdEnv(gym.Env):
         self.reward = 0
         self.done = False
 
+        for event in pygame.event.get():
+            if event.type == self.event:
+                self._generate_pipes()
+
         # Take an action
         if action == 1:
             self.bird.flap()
@@ -101,15 +102,9 @@ class FlappyBirdEnv(gym.Env):
         # Update
         self.bird.update()
 
-        now = pygame.time.get_ticks()
-
-        if now - self.last >= self.cooldown:
-            self.last = now
-            self._generate_pipes()
-
         if self.bird.rect.top <= 0 or self.bird.rect.bottom >= SCREEN_HEIGHT:
             self.done = True
-            self.reward = -2
+            self.reward = -1000
 
         if self.foreground is not None:
             self.foreground_rect.left -= 2
@@ -126,13 +121,12 @@ class FlappyBirdEnv(gym.Env):
                 and self.bird.rect.bottom < bottom_pipe.rect.top
             ):
                 self.score += 1
-                self.reward = 10
 
             # Check Collision
             if self.bird.check_collision(top_pipe) or self.bird.check_collision(
                 bottom_pipe
             ):
-                self.reward = -2
+                self.reward = -1000
                 self.done = True
 
             # Remove pipes if beyond the screen
@@ -143,11 +137,11 @@ class FlappyBirdEnv(gym.Env):
         if self.foreground_rect is not None and self.bird.check_collision(
             self.foreground_rect
         ):
-            self.reward = -2
+            self.reward = -1000
             self.done = True
 
         if not self.done:
-            self.reward += 0.1
+            self.reward += 1
 
         observation = self._get_obs()
         reward = self.reward
@@ -191,3 +185,7 @@ class FlappyBirdEnv(gym.Env):
         if self.screen is not None:
             pygame.display.quit()
             pygame.quit()
+
+
+# env = FlappyBirdEnv()
+env = FlappyBirdEnv(render_mode="human")

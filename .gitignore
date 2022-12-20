@@ -1,2 +1,4 @@
 models
 logs
+.vscode
+__pycache__
