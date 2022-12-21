@@ -185,7 +185,3 @@ class FlappyBirdEnv(gym.Env):
         if self.screen is not None:
             pygame.display.quit()
             pygame.quit()
-
-
-# env = FlappyBirdEnv()
-env = FlappyBirdEnv(render_mode="human")
