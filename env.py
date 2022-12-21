@@ -42,8 +42,6 @@ class FlappyBirdEnv(gym.Env):
         self.foreground_rect = None
         self.top_pipes = []
         self.bottom_pipes = []
-        self.event = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.event, 2000)
 
     def _get_obs(self):
         if len(self.bottom_pipes) == 0:
@@ -69,14 +67,12 @@ class FlappyBirdEnv(gym.Env):
         )
 
     def reset(self):
-        pygame.time.set_timer(self.event, 0)
-        pygame.time.set_timer(self.event, 2000)
         self.bird = Bird()
         self.reward = 0
         self.score = 0
         self.done = False
-        self.top_pipes = [Pipe({"x": 200, "y": -250, "type": "top"})]
-        self.bottom_pipes = [Pipe({"x": 200, "y": 180, "type": "bottom"})]
+        self.top_pipes = [Pipe({"x": 200, "y": -180, "type": "top"})]
+        self.bottom_pipes = [Pipe({"x": 200, "y": 240, "type": "bottom"})]
 
         observation = self._get_obs()
 
@@ -89,12 +85,8 @@ class FlappyBirdEnv(gym.Env):
         self.reward = 0
         self.done = False
 
-        for event in pygame.event.get():
-            if event.type == self.event:
-                self._generate_pipes()
-
         # Take an action
-        if action == 1:
+        if action == 1 and self.bird.rect.top > 20:
             self.bird.flap()
         elif action == 0:
             pass
@@ -130,7 +122,8 @@ class FlappyBirdEnv(gym.Env):
                 self.done = True
 
             # Remove pipes if beyond the screen
-            if top_pipe.rect.right < -10:
+            if top_pipe.rect.right < 0:
+                self._generate_pipes()
                 self.top_pipes.pop(0)
                 self.bottom_pipes.pop(0)
 
