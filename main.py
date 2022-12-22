@@ -12,5 +12,5 @@ agent = PPO
 
 # Testing
 env = FlappyBirdEnv(render_mode="human")  # Testing
-model = agent.load("./models/flappy_bird_400000")
+model = agent.load("./models/flappy_bird_2000000")
 test_model(env=env, model=model, episodes=20)

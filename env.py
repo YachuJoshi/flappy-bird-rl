@@ -71,8 +71,10 @@ class FlappyBirdEnv(gym.Env):
         self.reward = 0
         self.score = 0
         self.done = False
-        self.top_pipes = [Pipe({"x": 200, "y": -180, "type": "top"})]
-        self.bottom_pipes = [Pipe({"x": 200, "y": 240, "type": "bottom"})]
+        self.top_pipes = [Pipe({"x": 200, "y": -180, "type": "top"})]  # -250 ( Test )
+        self.bottom_pipes = [
+            Pipe({"x": 200, "y": 240, "type": "bottom"})
+        ]  # 180 ( Test )
 
         observation = self._get_obs()
 
@@ -86,7 +88,8 @@ class FlappyBirdEnv(gym.Env):
         self.done = False
 
         # Take an action
-        if action == 1 and self.bird.rect.top > 20:
+        # if action == 1:
+        if action == 1 and self.bird.rect.top > 20:  # Test
             self.bird.flap()
         elif action == 0:
             pass
